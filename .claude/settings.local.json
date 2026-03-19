@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Workspace/mimeit-monorepo/**)",
+      "Read(//c/Workspace/mimeit-monorepo/node_modules/**)"
+    ]
+  }
+}
