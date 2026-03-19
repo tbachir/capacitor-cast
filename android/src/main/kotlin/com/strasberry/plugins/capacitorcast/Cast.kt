@@ -1,0 +1,12 @@
+package com.strasberry.plugins.capacitorcast
+
+import android.util.Log
+
+class Cast {
+
+    fun echo(value: String?): String? {
+        Log.i("Echo", value ?: "null")
+
+        return value
+    }
+}
