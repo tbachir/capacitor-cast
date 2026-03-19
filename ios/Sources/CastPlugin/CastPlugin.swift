@@ -15,6 +15,7 @@ public class CastPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "getSession", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "requestSession", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "showDevicePicker", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "connectToDevice", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "endSession", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "loadMedia", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "play", returnType: CAPPluginReturnPromise),
@@ -25,6 +26,7 @@ public class CastPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "setMuted", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getMediaStatus", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getDiscoveredDevices", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "rescanDevices", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "openSettings", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "sendMessage", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "subscribeNamespace", returnType: CAPPluginReturnPromise),
@@ -128,6 +130,15 @@ public class CastPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
+    @objc func connectToDevice(_ call: CAPPluginCall) {
+        do {
+            try implementation.connectToDevice(deviceId: call.getString("deviceId"))
+            call.resolve()
+        } catch {
+            reject(call, method: "connectToDevice", error: error)
+        }
+    }
+
     @objc func endSession(_ call: CAPPluginCall) {
         do {
             let stopCasting = call.getBool("stopCasting") ?? true
@@ -225,6 +236,14 @@ public class CastPlugin: CAPPlugin, CAPBridgedPlugin {
             call.resolve(["devices": try implementation.getDiscoveredDevices()])
         } catch {
             reject(call, method: "getDiscoveredDevices", error: error)
+        }
+    }
+
+    @objc func rescanDevices(_ call: CAPPluginCall) {
+        do {
+            call.resolve(["devices": try implementation.rescanDevices()])
+        } catch {
+            reject(call, method: "rescanDevices", error: error)
         }
     }
 

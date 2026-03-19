@@ -151,6 +151,14 @@ class CastPlugin : Plugin() {
     }
 
     @PluginMethod
+    fun connectToDevice(call: PluginCall) {
+        runOnMainThread(call, "connectToDevice") {
+            implementation.connectToDevice(call.getString("deviceId"))
+            call.resolve()
+        }
+    }
+
+    @PluginMethod
     fun endSession(call: PluginCall) {
         runOnMainThread(call, "endSession") {
             val stopCasting = call.getBoolean("stopCasting") ?: true
@@ -252,6 +260,20 @@ class CastPlugin : Plugin() {
     fun getDiscoveredDevices(call: PluginCall) {
         runOnMainThread(call, "getDiscoveredDevices") {
             val devices = implementation.getDiscoveredDevices()
+            val arr = org.json.JSONArray()
+            devices.forEach { device ->
+                val obj = JSObject()
+                device.forEach { (k, v) -> if (v != null) obj.put(k, v) }
+                arr.put(obj)
+            }
+            call.resolve(JSObject().apply { put("devices", arr) })
+        }
+    }
+
+    @PluginMethod
+    fun rescanDevices(call: PluginCall) {
+        runOnMainThread(call, "rescanDevices") {
+            val devices = implementation.rescanDevices()
             val arr = org.json.JSONArray()
             devices.forEach { device ->
                 val obj = JSObject()

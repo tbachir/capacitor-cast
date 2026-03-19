@@ -75,7 +75,6 @@ public class Cast: NSObject {
             try configureCastContextOnMain(applicationId: appId)
             attachSessionManagerListener()
             attachDiscoveryManagerListener()
-            restartDiscoveryCycle()
             attachMessageChannelsIfNeeded()
         }
 #else
@@ -106,16 +105,7 @@ public class Cast: NSObject {
             completion(permissionPayload())
             return
         }
-
-        probeLocalNetworkPermission { [weak self] permissionState in
-            guard let self else {
-                completion(["localNetwork": "prompt"])
-                return
-            }
-
-            self.localNetworkPermissionState = permissionState
-            completion(self.permissionPayload())
-        }
+        completion(permissionPayload())
     }
 
     public func requestPermissions(_ completion: @escaping ([String: Any]) -> Void) {
@@ -241,6 +231,40 @@ public class Cast: NSObject {
 
             ensureDiscoveryIsActive()
             GCKCastContext.sharedInstance().presentCastDialog()
+        }
+#else
+        throw CastException(code: "UNSUPPORTED_PLATFORM", message: "GoogleCast SDK is not linked in this iOS build")
+#endif
+    }
+
+    public func connectToDevice(deviceId: String?) throws {
+        try ensureInitialized()
+
+#if canImport(GoogleCast)
+        try runOnMainSync {
+            let resolvedDeviceId = deviceId?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if resolvedDeviceId.isEmpty {
+                throw CastException(
+                    code: "INVALID_ARGUMENT",
+                    message: "connectToDevice requires a non-empty deviceId"
+                )
+            }
+
+            ensureDiscoveryIsActive()
+
+            let manager = GCKCastContext.sharedInstance().discoveryManager
+            let targetDevice = (0..<manager.deviceCount)
+                .map { manager.device(at: $0) }
+                .first { $0.deviceID == resolvedDeviceId }
+
+            guard let device = targetDevice else {
+                throw CastException(
+                    code: "INVALID_ARGUMENT",
+                    message: "Unknown cast device: \(resolvedDeviceId)"
+                )
+            }
+
+            GCKCastContext.sharedInstance().sessionManager.startSession(with: device)
         }
 #else
         throw CastException(code: "UNSUPPORTED_PLATFORM", message: "GoogleCast SDK is not linked in this iOS build")
@@ -648,8 +672,8 @@ public class Cast: NSObject {
         let criteria = GCKDiscoveryCriteria(applicationID: applicationId)
         let options = GCKCastOptions(discoveryCriteria: criteria)
         options.physicalVolumeButtonsWillControlDeviceVolume = true
-        options.disableDiscoveryAutostart = false
-        options.startDiscoveryAfterFirstTapOnCastButton = false
+        options.disableDiscoveryAutostart = true
+        options.startDiscoveryAfterFirstTapOnCastButton = true
 
         var castError: GCKError?
         let initialized = GCKCastContext.setSharedInstanceWith(options, error: &castError)
@@ -682,6 +706,7 @@ public class Cast: NSObject {
         try ensureInitialized()
 #if canImport(GoogleCast)
         return try runOnMainSync {
+            ensureDiscoveryIsActive()
             let manager = GCKCastContext.sharedInstance().discoveryManager
             let connectedDeviceId = GCKCastContext.sharedInstance().sessionManager.currentCastSession?.device.deviceID
             return (0..<manager.deviceCount).map { i in
@@ -694,6 +719,18 @@ public class Cast: NSObject {
                 if let model = device.modelName { entry["modelName"] = model }
                 return entry
             }
+        }
+#else
+        throw CastException(code: "UNSUPPORTED_PLATFORM", message: "GoogleCast SDK is not linked in this iOS build")
+#endif
+    }
+
+    public func rescanDevices() throws -> [[String: Any]] {
+        try ensureInitialized()
+#if canImport(GoogleCast)
+        return try runOnMainSync {
+            restartDiscoveryCycle()
+            return try getDiscoveredDevices()
         }
 #else
         throw CastException(code: "UNSUPPORTED_PLATFORM", message: "GoogleCast SDK is not linked in this iOS build")

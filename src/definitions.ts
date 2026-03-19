@@ -171,6 +171,13 @@ export interface NamespaceOptions {
   namespace: string;
 }
 
+export interface ConnectToDeviceOptions {
+  /**
+   * Platform-specific identifier returned by `getDiscoveredDevices()`.
+   */
+  deviceId: string;
+}
+
 export interface CastDevice {
   /** Platform-specific device identifier. */
   deviceId: string;
@@ -247,16 +254,19 @@ export interface CastPlugin {
 
   /**
    * Returns the current local network permission status.
+   * This method is non-intrusive and never triggers the OS permission prompt.
    */
   checkPermissions(): Promise<CastPermissionStatus>;
 
   /**
    * Requests local network permission when applicable.
+   * This is the only API that may trigger the OS permission prompt.
    */
   requestPermissions(): Promise<CastPermissionStatus>;
 
   /**
    * Initializes the plugin from `capacitor.config.*` values.
+   * Call this explicitly when `autoInitialize` is disabled in Capacitor config.
    */
   initialize(): Promise<InitializeResult>;
 
@@ -284,6 +294,11 @@ export interface CastPlugin {
    * Opens the cast device picker when available for the configured UI mode.
    */
   showDevicePicker(): Promise<void>;
+
+  /**
+   * Connects directly to a discovered cast device.
+   */
+  connectToDevice(options: ConnectToDeviceOptions): Promise<void>;
 
   /**
    * Ends the active cast session.
@@ -335,6 +350,11 @@ export interface CastPlugin {
    * On web the list is always empty — use `requestSession()` instead.
    */
   getDiscoveredDevices(): Promise<DiscoveredDevicesResult>;
+
+  /**
+   * Restarts cast discovery and emits an updated devices list.
+   */
+  rescanDevices(): Promise<DiscoveredDevicesResult>;
 
   /**
    * Opens the app's system settings page (useful to guide the user after a

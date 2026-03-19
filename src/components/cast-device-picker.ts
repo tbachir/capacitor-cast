@@ -78,7 +78,10 @@ export class CastDevicePicker extends HTMLElement {
     this.scanning = true;
     this.render();
     try {
-      const result = await this.cast.getDiscoveredDevices();
+      const result =
+        typeof this.cast.rescanDevices === 'function'
+          ? await this.cast.rescanDevices()
+          : await this.cast.getDiscoveredDevices();
       this.applyDevices(result);
     } catch {
       // best-effort
@@ -214,7 +217,11 @@ export class CastDevicePicker extends HTMLElement {
     if (!this.cast) return;
     this.emitEvent('cast-device-select', { device });
     try {
-      await this.cast.requestSession();
+      if (typeof this.cast.connectToDevice === 'function') {
+        await this.cast.connectToDevice({ deviceId: device.deviceId });
+      } else {
+        await this.cast.requestSession();
+      }
     } catch (err) {
       const e = err as { code?: string; message?: string };
       this.emitError(e.code ?? 'OPERATION_FAILED', e.message ?? 'Failed to connect');

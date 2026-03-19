@@ -22,6 +22,27 @@ Sync native files
 npx cap sync
 ```
 
+## Consent-first setup (recommended)
+
+To avoid showing local-network permission at app launch, disable plugin auto-init
+and initialize Cast only after an explicit user action.
+
+```ts
+plugins: {
+  Cast: {
+    receiverApplicationId: 'FB38EA42',
+    autoInitialize: false,
+  },
+}
+```
+
+Behavior contract:
+
+- `checkPermissions()` is non-intrusive and never triggers an OS prompt.
+- `requestPermissions()` is the only API that may trigger the OS prompt.
+- For custom UIs, use `getDiscoveredDevices()` + `connectToDevice({ deviceId })`
+  and optionally `rescanDevices()`.
+
 ## API
 
 <docgen-index>
@@ -35,6 +56,7 @@ npx cap sync
 * [`getSession()`](#getsession)
 * [`requestSession()`](#requestsession)
 * [`showDevicePicker()`](#showdevicepicker)
+* [`connectToDevice(...)`](#connecttodevice)
 * [`endSession(...)`](#endsession)
 * [`loadMedia(...)`](#loadmedia)
 * [`play()`](#play)
@@ -45,6 +67,7 @@ npx cap sync
 * [`setMuted(...)`](#setmuted)
 * [`getMediaStatus()`](#getmediastatus)
 * [`getDiscoveredDevices()`](#getdiscovereddevices)
+* [`rescanDevices()`](#rescandevices)
 * [`openSettings()`](#opensettings)
 * [`sendMessage(...)`](#sendmessage)
 * [`subscribeNamespace(...)`](#subscribenamespace)
@@ -82,6 +105,7 @@ checkPermissions() => Promise<CastPermissionStatus>
 ```
 
 Returns the current local network permission status.
+This method is non-intrusive and never triggers the OS permission prompt.
 
 **Returns:** <code>Promise&lt;<a href="#castpermissionstatus">CastPermissionStatus</a>&gt;</code>
 
@@ -95,6 +119,7 @@ requestPermissions() => Promise<CastPermissionStatus>
 ```
 
 Requests local network permission when applicable.
+This is the only API that may trigger the OS permission prompt.
 
 **Returns:** <code>Promise&lt;<a href="#castpermissionstatus">CastPermissionStatus</a>&gt;</code>
 
@@ -108,6 +133,7 @@ initialize() => Promise<InitializeResult>
 ```
 
 Initializes the plugin from `capacitor.config.*` values.
+Call this explicitly when `autoInitialize` is disabled in Capacitor config.
 
 **Returns:** <code>Promise&lt;<a href="#initializeresult">InitializeResult</a>&gt;</code>
 
@@ -171,6 +197,21 @@ showDevicePicker() => Promise<void>
 ```
 
 Opens the cast device picker when available for the configured UI mode.
+
+--------------------
+
+
+### connectToDevice(...)
+
+```typescript
+connectToDevice(options: ConnectToDeviceOptions) => Promise<void>
+```
+
+Connects directly to a discovered cast device.
+
+| Param         | Type                                                                      |
+| ------------- | ------------------------------------------------------------------------- |
+| **`options`** | <code><a href="#connecttodeviceoptions">ConnectToDeviceOptions</a></code> |
 
 --------------------
 
@@ -306,6 +347,19 @@ getDiscoveredDevices() => Promise<DiscoveredDevicesResult>
 
 Returns the list of Cast devices currently discovered on the network.
 On web the list is always empty — use `requestSession()` instead.
+
+**Returns:** <code>Promise&lt;<a href="#discovereddevicesresult">DiscoveredDevicesResult</a>&gt;</code>
+
+--------------------
+
+
+### rescanDevices()
+
+```typescript
+rescanDevices() => Promise<DiscoveredDevicesResult>
+```
+
+Restarts cast discovery and emits an updated devices list.
 
 **Returns:** <code>Promise&lt;<a href="#discovereddevicesresult">DiscoveredDevicesResult</a>&gt;</code>
 
@@ -502,6 +556,13 @@ Removes all plugin listeners.
 | Prop          | Type                                                                        |
 | ------------- | --------------------------------------------------------------------------- |
 | **`session`** | <code><a href="#castsessionsnapshot">CastSessionSnapshot</a> \| null</code> |
+
+
+#### ConnectToDeviceOptions
+
+| Prop           | Type                | Description                                                        |
+| -------------- | ------------------- | ------------------------------------------------------------------ |
+| **`deviceId`** | <code>string</code> | Platform-specific identifier returned by `getDiscoveredDevices()`. |
 
 
 #### EndSessionOptions

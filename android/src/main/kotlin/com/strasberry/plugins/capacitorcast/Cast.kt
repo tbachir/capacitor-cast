@@ -212,6 +212,40 @@ class Cast(
         }
     }
 
+    fun connectToDevice(deviceId: String?) {
+        ensureInitialized()
+
+        val resolvedDeviceId = deviceId?.trim().orEmpty()
+        if (resolvedDeviceId.isEmpty()) {
+            throw CastException(
+                code = "INVALID_ARGUMENT",
+                message = "connectToDevice requires a non-empty deviceId",
+            )
+        }
+
+        val selector = buildRouteSelector()
+            ?: throw CastException(
+                code = "OPERATION_FAILED",
+                message = "Unable to resolve cast route selector",
+            )
+
+        val router = mediaRouter ?: MediaRouter.getInstance(appContext).also { mediaRouter = it }
+        val route = (router.routes ?: emptyList())
+            .firstOrNull { candidate ->
+                candidate.id == resolvedDeviceId &&
+                    candidate.matchesSelector(selector) &&
+                    !candidate.isDefault &&
+                    candidate.isEnabled
+            }
+            ?: throw CastException(
+                code = "INVALID_ARGUMENT",
+                message = "Unknown cast device: $resolvedDeviceId",
+            )
+
+        router.selectRoute(route)
+        emitDevicesChanged()
+    }
+
     fun endSession(stopCasting: Boolean): Boolean {
         ensureInitialized()
 
@@ -408,6 +442,18 @@ class Cast(
                     "isConnected" to (route.id == connectedDeviceId),
                 )
             }
+    }
+
+    fun rescanDevices(): List<Map<String, Any?>> {
+        ensureInitialized()
+        val appId = receiverApplicationId.ifBlank {
+            throw CastException(code = "OPERATION_FAILED", message = "Receiver application id is not configured")
+        }
+
+        attachDeviceDiscovery(appId)
+        val devices = getDiscoveredDevices()
+        eventListener?.onDevicesChanged(devices)
+        return devices
     }
 
     fun openSettings() {

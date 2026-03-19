@@ -3,6 +3,7 @@ import type { PluginListenerHandle } from '@capacitor/core';
 
 import type {
   CastCapabilities,
+  ConnectToDeviceOptions,
   CastErrorCode,
   CastErrorEvent,
   CastMediaStatusSnapshot,
@@ -327,6 +328,24 @@ export class CastWeb extends WebPlugin implements CastPlugin {
     }
   }
 
+  async connectToDevice(options: ConnectToDeviceOptions): Promise<void> {
+    this.ensureInitialized('connectToDevice');
+    this.ensureSupported('connectToDevice');
+
+    const deviceId = typeof options?.deviceId === 'string' ? options.deviceId.trim() : '';
+    if (!deviceId) {
+      this.throwPluginError(
+        'connectToDevice',
+        'INVALID_ARGUMENT',
+        'connectToDevice requires a non-empty deviceId',
+      );
+    }
+
+    // Web sender SDK does not expose direct route connection by id.
+    // Use the native Cast session request flow.
+    await this.requestSession();
+  }
+
   async endSession(options?: EndSessionOptions): Promise<void> {
     this.ensureInitialized('endSession');
     this.ensureSupported('endSession');
@@ -486,6 +505,11 @@ export class CastWeb extends WebPlugin implements CastPlugin {
     return {
       devices: [{ deviceId, friendlyName, isConnected: true }],
     };
+  }
+
+  async rescanDevices(): Promise<DiscoveredDevicesResult> {
+    this.ensureInitialized('rescanDevices');
+    return this.getDiscoveredDevices();
   }
 
   async openSettings(): Promise<void> {
