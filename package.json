@@ -1,6 +1,6 @@
 {
   "name": "@strasberry/capacitor-cast",
-  "version": "0.0.1",
+  "version": "2.0.0",
   "description": "Capacitor plugin that enables Cast functionality for web, iOS, and Android.",
   "main": "dist/plugin.cjs.js",
   "module": "dist/esm/index.js",
@@ -65,7 +65,7 @@
     "@capacitor/core": ">=8.0.0"
   },
   "prettier": "@ionic/prettier-config",
-  "swiftlint": "@ionic/swiftlint-config",
+  "swiftlint": ".swiftlint.yml",
   "eslintConfig": {
     "extends": "@ionic/eslint-config/recommended"
   },

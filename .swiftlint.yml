@@ -1,0 +1,8 @@
+included:
+  - ios/Sources
+  - ios/Tests
+
+disabled_rules:
+  - file_length
+  - type_body_length
+  - identifier_name

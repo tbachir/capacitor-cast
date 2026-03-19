@@ -1,10 +1,3 @@
-import { registerPlugin } from '@capacitor/core';
-
-import type { CastPlugin } from './definitions';
-
-const Cast = registerPlugin<CastPlugin>('Cast', {
-  web: () => import('./web').then((m) => new m.CastWeb()),
-});
-
 export * from './definitions';
-export { Cast };
+export { Cast } from './cast-instance';
+export { CastDevicePicker } from './components/cast-device-picker';
